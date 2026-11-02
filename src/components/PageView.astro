@@ -36,6 +36,11 @@ const globalSectionEntries = site.components.flatMap((entry, componentIndex) => 
   return (resolved.sections ?? []).map((section, sectionIndex) => ({ componentIndex, sectionIndex, section }));
 });
 const navbarEntries = globalSectionEntries.filter(({ section }) => section.blockType === "navbar");
+// A page's postFooter section renders after the global footer (the footer
+// scrolls up to uncover it), so it is pulled out of the main content flow.
+const pageSections = content.sections.map((section, index) => ({ section, index }));
+const mainSections = pageSections.filter(({ section }) => section.blockType !== "postFooter");
+const postFooterSections = pageSections.filter(({ section }) => section.blockType === "postFooter");
 const footerEntries = globalSectionEntries.filter(({ section }) => section.blockType !== "navbar");
 ---
 
@@ -44,7 +49,7 @@ const footerEntries = globalSectionEntries.filter(({ section }) => section.block
     {skipToContentLabel && <a class="skip-link" href="#main-content">{skipToContentLabel}</a>}
     {navbarEntries.map(({ componentIndex, sectionIndex, section }) => {
       const prefix = `components.${componentIndex}.component.${sectionIndex}`;
-      if (isSharedSection(section)) return <SectionRenderer section={section} pathPrefix={prefix} />;
+      if (isSharedSection(section)) return <SectionRenderer client:load section={section} pathPrefix={prefix} />;
       return (
         <section data-component={componentIndex} data-section={section.blockType} data-section-index={sectionIndex}>
           {section.blockType}
@@ -54,9 +59,9 @@ const footerEntries = globalSectionEntries.filter(({ section }) => section.block
   </Fragment>
   <div data-inline-preview-root data-payload-server-url={payloadURL} data-payload-global-slug={payloadGlobalSlug} data-payload-collection="pages" data-payload-id={content.id} data-locale={locale}>
     <main id="main-content" tabindex="-1">
-      {content.sections.map((section, index) => {
+      {mainSections.map(({ section, index }) => {
         const prefix = `sections.${index}`;
-        if (isSharedSection(section)) return <SectionRenderer section={section} pathPrefix={prefix} />;
+        if (isSharedSection(section)) return <SectionRenderer client:visible section={section} pathPrefix={prefix} />;
         return (
           <section data-section={section.blockType} data-section-index={index}>
             {section.blockType}
@@ -68,9 +73,18 @@ const footerEntries = globalSectionEntries.filter(({ section }) => section.block
   <Fragment slot="footer">
     {footerEntries.map(({ componentIndex, sectionIndex, section }) => {
       const prefix = `components.${componentIndex}.component.${sectionIndex}`;
-      if (isSharedSection(section)) return <SectionRenderer section={section} pathPrefix={prefix} />;
+      if (isSharedSection(section)) return <SectionRenderer client:visible section={section} pathPrefix={prefix} />;
       return (
         <section data-component={componentIndex} data-section={section.blockType} data-section-index={sectionIndex}>
+          {section.blockType}
+        </section>
+      );
+    })}
+    {postFooterSections.map(({ section, index }) => {
+      const prefix = `sections.${index}`;
+      if (isSharedSection(section)) return <SectionRenderer client:visible section={section} pathPrefix={prefix} />;
+      return (
+        <section data-section={section.blockType} data-section-index={index}>
           {section.blockType}
         </section>
       );

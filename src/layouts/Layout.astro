@@ -47,6 +47,21 @@ const languageAlternates = [
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    {/* The browser's own reload restore lands 90-170px down while the intro
+        animations are still settling the layout, so restore scroll here:
+        the top on a load or reload, the saved spot on back/forward. */}
+    <script is:inline>
+      (() => {
+        if (!("scrollRestoration" in history)) return;
+        history.scrollRestoration = "manual";
+        const key = "wct-scroll:" + location.pathname + location.search;
+        addEventListener("pagehide", () => { try { sessionStorage.setItem(key, String(Math.round(scrollY))); } catch {} });
+        if (performance.getEntriesByType("navigation")[0]?.type !== "back_forward") return;
+        let y = 0;
+        try { y = Number(sessionStorage.getItem(key)) || 0; } catch {}
+        if (y) addEventListener("load", () => scrollTo({ top: y, behavior: "instant" }), { once: true });
+      })();
+    </script>
     <meta name="generator" content={Astro.generator} />
     <meta name="color-scheme" content="light" />
     <meta name="theme-color" content="#ffffff" />
@@ -54,7 +69,7 @@ const languageAlternates = [
     <link rel="apple-touch-icon" href={favicon} />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=Inter:wght@400;500;600;700&family=Newsreader:opsz,wght@6..72,400;6..72,500&display=swap" />
     {/* Ebony — the navbar's Call/Book Now/Our Services font — via the
         Adobe Typekit kit id from the Figma file's own dev-mode export. */}
     <link rel="stylesheet" href="https://use.typekit.net/nwu5mhu.css" />
